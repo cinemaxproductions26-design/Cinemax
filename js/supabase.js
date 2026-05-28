@@ -3,8 +3,8 @@
 // 1. Go to https://supabase.com/dashboard → your project → Settings → API
 // 2. Copy "Project URL" and "anon public" key and paste below
 // ============================================================
-const SUPABASE_URL  = 'YOUR_SUPABASE_PROJECT_URL';
-const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL  = 'https://hfrtfuawsvgkmdriuhay.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmcnRmdWF3c3Zna21kcml1aGF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5ODI1NDYsImV4cCI6MjA5NTU1ODU0Nn0.I5IRRL3x_A2Y36oHIi6DUlgYgf4CP4xYfld29U7ONP4';
 const ADMIN_EMAIL   = 'admin@cinemax.in'; // used for admin login (hidden from UI)
 
 let db;
