@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cinemax Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="loginScreen" class="admin-login">
+  <div class="login-box">
+    <img src="../assets/logo.png" alt="Cinemax" onerror="this.style.display='none'">
+    <h1>Admin Panel</h1>
+    <p class="sub">Enter your password to continue</p>
+    <input type="password" id="adminPass" class="login-input" placeholder="••••••••" autocomplete="current-password">
+    <button id="loginBtn" class="login-btn">Login</button>
+    <p id="loginError" class="login-error"></p>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="dashboard" class="admin-dashboard hidden">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo">
+      <img src="../assets/logo.png" alt="Cinemax" onerror="this.style.display='none'">
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="active" data-section="settings">🎨 &nbsp;Site Settings</a>
+      <a href="#" data-section="fonts">🔤 &nbsp;Font Manager</a>
+      <a href="#" data-section="portfolio">📂 &nbsp;Portfolio</a>
+      <a href="#" data-section="photography">📷 &nbsp;Photography</a>
+      <a href="#" data-section="clients">👥 &nbsp;Clients</a>
+      <a href="#" data-section="testimonials">💬 &nbsp;Testimonials</a>
+      <a href="#" data-section="password">🔒 &nbsp;Password</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <a href="../index.html" class="view-site-btn" target="_blank">← View Live Site</a>
+      <button id="logoutBtn" class="logout-btn">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+
+    <!-- ── SETTINGS ── -->
+    <div id="panel-settings" class="admin-panel active">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Site Settings</h2>
+          <p class="panel-sub">Customize the color theme of your website</p>
+        </div>
+        <button class="btn-save" onclick="saveSettings()">Save Changes</button>
+      </div>
+
+      <div class="admin-card">
+        <p class="admin-card-title">Color Theme</p>
+        <div class="color-grid">
+
+          <div class="color-field">
+            <input type="color" id="set-bg" class="color-input" value="#07070f" data-var="--bg-primary">
+            <div>
+              <div style="font-size:0.85rem;font-weight:600;margin-bottom:2px">Background</div>
+              <div class="color-preview-text" id="set-bg-text">#07070f</div>
+            </div>
+          </div>
+
+          <div class="color-field">
+            <input type="color" id="set-accent" class="color-input" value="#cc1a2e" data-var="--accent-red">
+            <div>
+              <div style="font-size:0.85rem;font-weight:600;margin-bottom:2px">Accent / Red</div>
+              <div class="color-preview-text" id="set-accent-text">#cc1a2e</div>
+            </div>
+          </div>
+
+          <div class="color-field">
+            <input type="color" id="set-bg2" class="color-input" value="#0d0d1a" data-var="--bg-secondary">
+            <div>
+              <div style="font-size:0.85rem;font-weight:600;margin-bottom:2px">Secondary BG</div>
+              <div class="color-preview-text" id="set-bg2-text">#0d0d1a</div>
+            </div>
+          </div>
+
+          <div class="color-field">
+            <input type="color" id="set-card" class="color-input" value="#111120" data-var="--bg-card">
+            <div>
+              <div style="font-size:0.85rem;font-weight:600;margin-bottom:2px">Card Color</div>
+              <div class="color-preview-text" id="set-card-text">#111120</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <p class="admin-card-title">Hero Section</p>
+        <div class="form-row">
+          <label class="form-label">Hero Tagline</label>
+          <input class="admin-input" id="hero-tagline" placeholder="e.g. Creating Core Cinema" style="flex:1">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Sub Text</label>
+          <input class="admin-input" id="hero-sub" placeholder="Services text below title" style="flex:1">
+        </div>
+        <button class="btn-save" style="margin-top:8px" onclick="toast('Save Supabase settings to apply.','success')">Save Hero Text</button>
+      </div>
+    </div>
+
+    <!-- ── FONTS ── -->
+    <div id="panel-fonts" class="admin-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Font Manager</h2>
+          <p class="panel-sub">Choose Google Fonts for each section. <a href="https://fonts.google.com" target="_blank" style="color:var(--red)">Browse fonts →</a></p>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <p class="admin-card-title">Assign Fonts Per Section</p>
+
+        <div class="font-row" data-font-section="heading" style="border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:16px">
+          <div class="form-row">
+            <label class="form-label">Headings (H1, H2)</label>
+            <input class="admin-input font-name-input" placeholder="e.g. Bebas Neue">
+            <button class="btn-sm" onclick="previewFont(this)">Preview</button>
+            <button class="btn-save" onclick="saveFont(this)">Save</button>
+          </div>
+          <p class="font-preview-text">Creating Core Cinema</p>
+        </div>
+
+        <div class="font-row" data-font-section="body" style="border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:16px">
+          <div class="form-row">
+            <label class="form-label">Body Text</label>
+            <input class="admin-input font-name-input" placeholder="e.g. Inter">
+            <button class="btn-sm" onclick="previewFont(this)">Preview</button>
+            <button class="btn-save" onclick="saveFont(this)">Save</button>
+          </div>
+          <p class="font-preview-text" style="font-size:1rem">We craft cinematic experiences from sound to vision.</p>
+        </div>
+
+        <div class="font-row" data-font-section="nav">
+          <div class="form-row">
+            <label class="form-label">Navigation</label>
+            <input class="admin-input font-name-input" placeholder="e.g. Poppins">
+            <button class="btn-sm" onclick="previewFont(this)">Preview</button>
+            <button class="btn-save" onclick="saveFont(this)">Save</button>
+          </div>
+          <p class="font-preview-text" style="font-size:0.9rem">About &nbsp;·&nbsp; Portfolio &nbsp;·&nbsp; Pricing &nbsp;·&nbsp; Contact</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PORTFOLIO ── -->
+    <div id="panel-portfolio" class="admin-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Portfolio Manager</h2>
+          <p class="panel-sub">Add/remove portfolio categories and items. Toggle to show/hide on site.</p>
+        </div>
+        <button class="btn-save" onclick="addCategory()">+ New Category</button>
+      </div>
+
+      <div id="category-list"></div>
+    </div>
+
+    <!-- ── PHOTOGRAPHY ── -->
+    <div id="panel-photography" class="admin-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Photography Albums</h2>
+          <p class="panel-sub">Create albums (folders). Add photos to each album via Portfolio Manager → Photography.</p>
+        </div>
+        <button class="btn-save" onclick="addAlbum()">+ New Album</button>
+      </div>
+      <div class="admin-card">
+        <p class="admin-card-title">Albums</p>
+        <div class="item-list" id="album-list"></div>
+      </div>
+    </div>
+
+    <!-- ── CLIENTS ── -->
+    <div id="panel-clients" class="admin-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Clients</h2>
+          <p class="panel-sub">Add client logos or text badges to the scrolling marquee.</p>
+        </div>
+        <button class="btn-save" onclick="addClient()">+ Add Client</button>
+      </div>
+      <div class="admin-card">
+        <p class="admin-card-title">Client List <span style="color:var(--muted);font-size:0.78rem;text-transform:none;letter-spacing:0">(Leave logo URL blank for text-only badge)</span></p>
+        <div class="item-list" id="clients-list"></div>
+      </div>
+    </div>
+
+    <!-- ── TESTIMONIALS ── -->
+    <div id="panel-testimonials" class="admin-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Testimonials</h2>
+          <p class="panel-sub">Manage what people say about Cinemax.</p>
+        </div>
+        <button class="btn-save" onclick="addTestimonial()">+ Add Testimonial</button>
+      </div>
+      <div id="testimonials-list"></div>
+    </div>
+
+    <!-- ── PASSWORD ── -->
+    <div id="panel-password" class="admin-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Change Password</h2>
+          <p class="panel-sub">Update your admin panel password</p>
+        </div>
+      </div>
+      <div class="admin-card" style="max-width:400px">
+        <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:8px">
+          <label class="form-label">New Password</label>
+          <input type="password" id="new-password" class="admin-input" placeholder="Min 6 characters" style="width:100%">
+        </div>
+        <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:8px;margin-top:12px">
+          <label class="form-label">Confirm Password</label>
+          <input type="password" id="confirm-password" class="admin-input" placeholder="Repeat new password" style="width:100%">
+        </div>
+        <p id="pass-error" style="color:#ff6b6b;font-size:0.82rem;margin-top:8px;min-height:18px"></p>
+        <button class="btn-save" style="margin-top:12px" onclick="changePassword()">Update Password</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="../js/supabase.js"></script>
+<script src="admin.js"></script>
+<script>
+  // Wire up color picker labels
+  ['set-bg','set-accent','set-bg2','set-card'].forEach(id => {
+    const el = document.getElementById(id);
+    const txt = document.getElementById(id + '-text');
+    if (el && txt) el.addEventListener('input', () => { txt.textContent = el.value; });
+  });
+  // Load albums when photography panel first shown
+  document.querySelector('[data-section="photography"]').addEventListener('click', () => {
+    setTimeout(loadAlbums, 50);
+  });
+</script>
+</body>
+</html>

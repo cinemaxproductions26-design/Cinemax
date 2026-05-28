@@ -76,6 +76,78 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
+// ── Supabase dynamic loading ───────────────────────────────────
+(async function loadFromSupabase() {
+  if (typeof db === 'undefined') return;
+  try {
+    // Apply settings (colors, fonts)
+    const settings = await fetchSettings();
+    if (settings.length) applySettings(settings);
+
+    // Portfolio category visibility
+    const categories = await fetchCategories();
+    if (categories.length) {
+      const enabledMap = {};
+      categories.forEach(c => enabledMap[c.slug] = c.enabled);
+      document.querySelectorAll('.portfolio-card').forEach(card => {
+        const href = card.getAttribute('href') || '';
+        const slug = href.includes('music') ? 'music'
+                   : href.includes('sfx')   ? 'sfx'
+                   : href.includes('photo') ? 'photography'
+                   : href.includes('publicity') ? 'design' : null;
+        if (slug !== null && enabledMap[slug] === false) card.style.display = 'none';
+      });
+    }
+
+    // Load clients from Supabase
+    const clients = await fetchClients();
+    if (clients.length) {
+      function buildMarqueeRow(items) {
+        return [...items, ...items].map(c => {
+          if (c.logo_url) {
+            return `<div class="client-logo"><img src="${c.logo_url}" alt="${c.name}" style="max-height:40px;max-width:130px;object-fit:contain"></div>`;
+          }
+          return `<div class="client-logo">${c.name}</div>`;
+        }).join('');
+      }
+      const tracks = document.querySelectorAll('.marquee-track');
+      if (tracks[0]) tracks[0].innerHTML = buildMarqueeRow(clients);
+      if (tracks[1]) tracks[1].innerHTML = buildMarqueeRow([...clients].reverse());
+    }
+
+    // Load testimonials from Supabase
+    const tData = await fetchTestimonials();
+    if (tData.length) {
+      const slider = document.getElementById('testimonialSlider');
+      const dotsEl = document.getElementById('testimonialDots');
+      if (slider) {
+        slider.innerHTML = tData.map(t => `
+          <div class="testimonial-card">
+            <div class="t-profile">
+              <div class="t-avatar">${t.avatar_initials || t.name.slice(0,2).toUpperCase()}</div>
+              <div>
+                <p class="t-name">${t.name}</p>
+                <p class="t-role">${t.role || ''}</p>
+              </div>
+            </div>
+            <p class="t-quote">"${t.quote}"</p>
+            <div class="t-stars">${'★'.repeat(t.rating || 5)}</div>
+          </div>`).join('');
+        // Reinit dots
+        if (dotsEl) {
+          dotsEl.innerHTML = '';
+          tData.forEach((_, i) => {
+            const d = document.createElement('button');
+            d.className = 'dot' + (i===0?' active':'');
+            d.addEventListener('click', () => goTo(i));
+            dotsEl.appendChild(d);
+          });
+        }
+      }
+    }
+  } catch(e) { /* Supabase not configured — use static content */ }
+})();
+
 // Smooth scroll for anchor links
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => {
