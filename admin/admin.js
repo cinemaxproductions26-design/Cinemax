@@ -9,7 +9,10 @@ function toast(msg, type = '') {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ── Login ─────────────────────────────────────────────────────
+// ── Login (simple password check) ────────────────────────────
+// Password stored in localStorage so admin can change it via UI
+const ADMIN_PASSWORD = localStorage.getItem('cinemax_admin_pass') || 'CINEMAX';
+
 async function doLogin() {
   const pass = document.getElementById('adminPass').value.trim();
   const err  = document.getElementById('loginError');
@@ -19,16 +22,18 @@ async function doLogin() {
   btn.textContent = 'Logging in…';
   btn.disabled = true;
 
-  const { error } = await adminLogin(pass);
-  if (error) {
+  if (pass !== ADMIN_PASSWORD) {
     err.textContent = 'Wrong password. Try again.';
     btn.textContent = 'Login';
     btn.disabled = false;
-  } else {
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('dashboard').classList.remove('hidden');
-    initDashboard();
+    return;
   }
+
+  sessionStorage.setItem('cinemax_admin', '1');
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  initDashboard();
+
 }
 
 document.getElementById('adminPass')?.addEventListener('keydown', e => {
@@ -37,9 +42,8 @@ document.getElementById('adminPass')?.addEventListener('keydown', e => {
 document.getElementById('loginBtn')?.addEventListener('click', doLogin);
 
 // Check existing session on load
-(async function checkSession() {
-  const session = await adminSession();
-  if (session) {
+(function checkSession() {
+  if (sessionStorage.getItem('cinemax_admin') === '1') {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('dashboard').classList.remove('hidden');
     initDashboard();
@@ -67,8 +71,8 @@ function setupSidebar() {
       document.getElementById('panel-' + a.dataset.section).classList.add('active');
     });
   });
-  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-    await adminLogout();
+  document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    sessionStorage.removeItem('cinemax_admin');
     location.reload();
   });
 }
@@ -429,13 +433,16 @@ async function addTestimonial() {
 }
 
 // ── PASSWORD CHANGE ───────────────────────────────────────────
-async function changePassword() {
-  const np = document.getElementById('new-password').value;
-  const cp = document.getElementById('confirm-password').value;
+function changePassword() {
+  const np  = document.getElementById('new-password').value;
+  const cp  = document.getElementById('confirm-password').value;
   const err = document.getElementById('pass-error');
   if (!np || np.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
-  if (np !== cp) { err.textContent = 'Passwords do not match.'; return; }
-  const { error } = await db.auth.updateUser({ password: np });
-  if (error) { err.textContent = error.message; }
-  else { err.textContent = ''; toast('Password updated!', 'success'); document.getElementById('new-password').value = ''; document.getElementById('confirm-password').value = ''; }
+  if (np !== cp)             { err.textContent = 'Passwords do not match.'; return; }
+  // Store new password in localStorage (persists on this device)
+  localStorage.setItem('cinemax_admin_pass', np);
+  err.textContent = '';
+  toast('Password updated! Use the new password next time you log in.', 'success');
+  document.getElementById('new-password').value   = '';
+  document.getElementById('confirm-password').value = '';
 }
