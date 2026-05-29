@@ -272,9 +272,19 @@ function renderItemRow(container, item, slug) {
         <option value="vertical"   ${item.orientation==='vertical'?'selected':''}>9:16</option>
       </select>`;
   } else if (isPhoto) {
-    extraFields = `<input class="admin-input" placeholder="Image URL" value="${item.media_url||''}" data-field="media_url" style="flex:2">`;
+    extraFields = `
+      <div style="display:flex;gap:4px;align-items:center;flex:2">
+        <input class="admin-input" placeholder="Image URL" value="${item.media_url||''}" data-field="media_url" id="media-url-${item.id}" style="flex:1">
+        <input type="file" accept="image/*" style="display:none" id="media-file-${item.id}" onchange="uploadAndFill(this,'media-url-${item.id}')">
+        <button class="btn-sm" style="padding:6px 10px;white-space:nowrap" title="Upload image" onclick="document.getElementById('media-file-${item.id}').click()">📤</button>
+      </div>`;
   } else {
-    extraFields = `<input class="admin-input" placeholder="Image URL" value="${item.media_url||''}" data-field="media_url" style="flex:2">`;
+    extraFields = `
+      <div style="display:flex;gap:4px;align-items:center;flex:2">
+        <input class="admin-input" placeholder="Image URL" value="${item.media_url||''}" data-field="media_url" id="media-url-${item.id}" style="flex:1">
+        <input type="file" accept="image/*" style="display:none" id="media-file-${item.id}" onchange="uploadAndFill(this,'media-url-${item.id}')">
+        <button class="btn-sm" style="padding:6px 10px;white-space:nowrap" title="Upload image" onclick="document.getElementById('media-file-${item.id}').click()">📤</button>
+      </div>`;
   }
 
   div.innerHTML = `
@@ -341,7 +351,11 @@ async function loadAlbums() {
     div.dataset.id = album.id;
     div.innerHTML = `
       <input class="admin-input" value="${album.title||''}" placeholder="Album title" data-field="title" style="flex:1.5">
-      <input class="admin-input" value="${album.cover_url||''}" placeholder="Cover image URL" data-field="cover_url" style="flex:2">
+      <div style="display:flex;gap:4px;align-items:center;flex:2">
+        <input class="admin-input" value="${album.cover_url||''}" placeholder="Cover image URL" data-field="cover_url" id="cover-url-${album.id}" style="flex:1">
+        <input type="file" accept="image/*" style="display:none" id="cover-file-${album.id}" onchange="uploadAndFill(this,'cover-url-${album.id}')">
+        <button class="btn-sm" style="padding:6px 10px;white-space:nowrap" title="Upload cover" onclick="document.getElementById('cover-file-${album.id}').click()">📤</button>
+      </div>
       <label class="toggle">
         <input type="checkbox" ${album.enabled?'checked':''}>
         <span class="toggle-slider"></span>
@@ -389,7 +403,11 @@ function renderClients(clients) {
     div.dataset.id = c.id;
     div.innerHTML = `
       <input class="admin-input" value="${c.name||''}" placeholder="Client name" data-field="name" style="flex:1">
-      <input class="admin-input" value="${c.logo_url||''}" placeholder="Logo URL (or leave blank for text)" data-field="logo_url" style="flex:2">
+      <div style="display:flex;gap:4px;align-items:center;flex:2">
+        <input class="admin-input" value="${c.logo_url||''}" placeholder="Logo URL" data-field="logo_url" id="logo-url-${c.id}" style="flex:1">
+        <input type="file" accept="image/*" style="display:none" id="logo-file-${c.id}" onchange="uploadAndFill(this,'logo-url-${c.id}')">
+        <button class="btn-sm" style="padding:6px 10px;white-space:nowrap" title="Upload logo" onclick="document.getElementById('logo-file-${c.id}').click()">📤</button>
+      </div>
       <input class="admin-input" value="${c.website_url||''}" placeholder="Website URL" data-field="website_url" style="flex:1.5">
       <label class="toggle">
         <input type="checkbox" ${c.enabled?'checked':''}>
@@ -474,8 +492,43 @@ async function addTestimonial() {
   if (data) { loadTestimonials(); toast('Testimonial added', 'success'); }
 }
 
+// ── INLINE IMAGE UPLOAD HELPERS ──────────────────────────────
+const IMG_BUCKET = 'Cinemax-images';
+
+// Upload a file and fill a target text input with the resulting public URL
+async function uploadAndFill(fileInput, targetId) {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const ext  = file.name.split('.').pop();
+  const path = `uploads/${Date.now()}-${Math.random().toString(36).slice(2,6)}.${ext}`;
+  const { error } = await db.storage.from(IMG_BUCKET).upload(path, file, { cacheControl: '3600', upsert: true });
+  if (error) { toast('Upload failed: ' + error.message, 'error'); return; }
+  const { data: { publicUrl } } = db.storage.from(IMG_BUCKET).getPublicUrl(path);
+  const target = document.getElementById(targetId);
+  if (target) target.value = publicUrl;
+  toast('Uploaded!', 'success');
+}
+
+// Upload widget: fills a hidden input + shows a preview image
+async function handleWidgetUpload(inputEl, hiddenId, previewId) {
+  const file = inputEl.files[0];
+  if (!file) return;
+  const btn = inputEl.closest('.upload-widget')?.querySelector('.upload-btn');
+  if (btn) { btn.textContent = 'Uploading…'; btn.disabled = true; }
+  const ext  = file.name.split('.').pop();
+  const path = `uploads/${Date.now()}-${Math.random().toString(36).slice(2,6)}.${ext}`;
+  const { error } = await db.storage.from(IMG_BUCKET).upload(path, file, { cacheControl: '3600', upsert: true });
+  if (error) { toast('Upload failed: ' + error.message, 'error'); if (btn) { btn.textContent = 'Upload'; btn.disabled = false; } return; }
+  const { data: { publicUrl } } = db.storage.from(IMG_BUCKET).getPublicUrl(path);
+  const hidden = document.getElementById(hiddenId);
+  if (hidden) hidden.value = publicUrl;
+  const preview = document.getElementById(previewId);
+  if (preview) { preview.src = publicUrl; preview.style.display = 'block'; }
+  if (btn) { btn.textContent = 'Change'; btn.disabled = false; }
+  toast('Uploaded!', 'success');
+}
+
 // ── IMAGE MANAGER (Supabase Storage) ─────────────────────────
-const IMG_BUCKET = 'Cinemax-images'; // Supabase Storage bucket name
 
 async function loadImageGallery() {
   const gallery = document.getElementById('imgGallery');
@@ -540,19 +593,35 @@ async function loadContactInfoAdmin() {
     const info = await fetchContactInfo();
     if (!info) return;
     const set = (id, val) => { const el = document.getElementById(id); if (el && val !== null && val !== undefined) el.value = val; };
-    set('ci-email',      info.email);
-    set('ci-whatsapp',   info.whatsapp);
-    set('ci-location',   info.location);
-    set('ci-instagram',  info.instagram_url);
-    set('ci-youtube',    info.youtube_url);
-    set('ci-linkedin',   info.linkedin_url);
-    set('ci-hero-logo',  info.hero_logo_url);
-    set('ci-about-title', info.about_title);
-    set('ci-about-desc',  info.about_desc);
-    set('ci-about-image', info.about_image_url);
-    set('ci-stat1-num',   info.stat1_num);   set('ci-stat1-label', info.stat1_label);
-    set('ci-stat2-num',   info.stat2_num);   set('ci-stat2-label', info.stat2_label);
-    set('ci-stat3-num',   info.stat3_num);   set('ci-stat3-label', info.stat3_label);
+    set('ci-email',        info.email);
+    set('ci-whatsapp',     info.whatsapp);
+    set('ci-location',     info.location);
+    set('ci-instagram',    info.instagram_url);
+    set('ci-youtube',      info.youtube_url);
+    set('ci-linkedin',     info.linkedin_url);
+    set('ci-hero-logo',    info.hero_logo_url);
+    set('ci-hero-eyebrow', info.hero_eyebrow);
+    set('ci-hero-title',   info.hero_title);
+    set('ci-hero-cta',     info.hero_cta);
+    set('ci-about-title',  info.about_title);
+    set('ci-about-desc',   info.about_desc);
+    set('ci-about-image',  info.about_image_url);
+    set('ci-stat1-num',    info.stat1_num);   set('ci-stat1-label', info.stat1_label);
+    set('ci-stat2-num',    info.stat2_num);   set('ci-stat2-label', info.stat2_label);
+    set('ci-stat3-num',    info.stat3_num);   set('ci-stat3-label', info.stat3_label);
+    // Populate image previews
+    if (info.hero_logo_url) {
+      const p = document.getElementById('prev-hero-logo');
+      if (p) { p.src = info.hero_logo_url; p.style.display = 'block'; }
+      const btn = document.querySelector('#uw-hero-logo .upload-btn');
+      if (btn) btn.textContent = 'Change Logo';
+    }
+    if (info.about_image_url) {
+      const p = document.getElementById('prev-about-image');
+      if (p) { p.src = info.about_image_url; p.style.display = 'block'; }
+      const btn = document.querySelector('#uw-about-image .upload-btn');
+      if (btn) btn.textContent = 'Change Image';
+    }
   } catch(e) {}
 }
 
@@ -567,6 +636,9 @@ async function saveContactInfo() {
     youtube_url:        get('ci-youtube'),
     linkedin_url:       get('ci-linkedin'),
     hero_logo_url:      get('ci-hero-logo'),
+    hero_eyebrow:       get('ci-hero-eyebrow'),
+    hero_title:         get('ci-hero-title'),
+    hero_cta:           get('ci-hero-cta'),
     about_title:        get('ci-about-title'),
     about_desc:         get('ci-about-desc'),
     about_image_url:    get('ci-about-image'),
@@ -575,7 +647,6 @@ async function saveContactInfo() {
     stat3_num:          get('ci-stat3-num'),   stat3_label: get('ci-stat3-label'),
     updated_at:         new Date().toISOString()
   };
-  // Remove null values
   Object.keys(payload).forEach(k => { if (payload[k] === null) delete payload[k]; });
   const { error } = await db.from('contact_info').upsert(payload, { onConflict: 'id' });
   if (error) toast('Error: ' + error.message);

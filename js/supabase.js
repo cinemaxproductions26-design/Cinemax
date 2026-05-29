@@ -80,9 +80,13 @@ function applySettings(settings) {
       const isCustomFile = s.google_fonts_url.includes('supabase') ||
                            s.google_fonts_url.match(/\.(ttf|woff2?|otf)(\?|$)/i);
       if (isCustomFile) {
-        // Custom font file — inject @font-face
+        const fmt = /\.woff2(\?|$)/i.test(s.google_fonts_url) ? 'woff2'
+                  : /\.woff(\?|$)/i.test(s.google_fonts_url)  ? 'woff'
+                  : /\.ttf(\?|$)/i.test(s.google_fonts_url)   ? 'truetype'
+                  : /\.otf(\?|$)/i.test(s.google_fonts_url)   ? 'opentype'
+                  : 'woff2';
         const style = document.createElement('style');
-        style.textContent = `@font-face { font-family: '${s.font_family}'; src: url('${s.google_fonts_url}') format('woff2'); font-display: swap; }`;
+        style.textContent = `@font-face { font-family: '${s.font_family}'; src: url('${s.google_fonts_url}') format('${fmt}'); font-display: swap; }`;
         document.head.appendChild(style);
       } else {
         // Google Fonts URL

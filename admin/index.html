@@ -225,11 +225,31 @@
 
       <div class="admin-card">
         <p class="admin-card-title">Hero Logo</p>
-        <div class="form-row">
-          <label class="form-label">Logo Image URL</label>
-          <input class="admin-input" id="ci-hero-logo" placeholder="https://... (paste image URL or upload to Supabase Storage)" style="flex:1">
+        <div class="upload-widget" id="uw-hero-logo">
+          <img id="prev-hero-logo" src="" alt="Logo preview" style="display:none;max-height:70px;border-radius:6px;margin-bottom:10px;object-fit:contain">
+          <input type="hidden" id="ci-hero-logo">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button type="button" class="btn-save upload-btn" onclick="document.getElementById('uf-hero-logo').click()">Upload Logo</button>
+            <span style="font-size:0.75rem;color:var(--muted)">PNG, SVG, WebP — replaces the navbar &amp; hero logo</span>
+          </div>
+          <input type="file" id="uf-hero-logo" accept="image/*" style="display:none" onchange="handleWidgetUpload(this,'ci-hero-logo','prev-hero-logo')">
         </div>
-        <p style="font-size:0.75rem;color:var(--muted);margin-top:8px">Tip: Upload logo to <a href="https://supabase.com/dashboard/project/hfrtfuawsvgkmdriuhay/storage" target="_blank" style="color:var(--red)">Supabase Storage</a> → copy public URL → paste here</p>
+      </div>
+
+      <div class="admin-card">
+        <p class="admin-card-title">Hero Text</p>
+        <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+          <label class="form-label">Eyebrow (small text above title)</label>
+          <input class="admin-input" id="ci-hero-eyebrow" placeholder="Welcome to Cinemax" style="width:100%">
+        </div>
+        <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px;margin-top:12px">
+          <label class="form-label">Main Title</label>
+          <input class="admin-input" id="ci-hero-title" placeholder="Creating Core Cinema" style="width:100%">
+        </div>
+        <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px;margin-top:12px">
+          <label class="form-label">CTA Button Text</label>
+          <input class="admin-input" id="ci-hero-cta" placeholder="Get A Quote" style="width:100%">
+        </div>
       </div>
 
       <div class="admin-card">
@@ -243,8 +263,16 @@
           <textarea class="admin-textarea" id="ci-about-desc" rows="4" placeholder="About your studio..."></textarea>
         </div>
         <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px;margin-top:12px">
-          <label class="form-label">Right Side Image URL</label>
-          <input class="admin-input" id="ci-about-image" placeholder="https://... (image shown on right side of About)" style="width:100%">
+          <label class="form-label">Right Side Image</label>
+          <div class="upload-widget" id="uw-about-image">
+            <img id="prev-about-image" src="" alt="Image preview" style="display:none;max-height:100px;border-radius:6px;margin-bottom:10px;object-fit:contain">
+            <input type="hidden" id="ci-about-image">
+            <div style="display:flex;align-items:center;gap:10px">
+              <button type="button" class="btn-save upload-btn" onclick="document.getElementById('uf-about-image').click()">Upload Image</button>
+              <span style="font-size:0.75rem;color:var(--muted)">Shown on the right side of the About section</span>
+            </div>
+            <input type="file" id="uf-about-image" accept="image/*" style="display:none" onchange="handleWidgetUpload(this,'ci-about-image','prev-about-image')">
+          </div>
         </div>
       </div>
 

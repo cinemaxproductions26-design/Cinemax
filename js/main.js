@@ -171,6 +171,14 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         const logo = document.getElementById('hero-logo-img');
         if (logo) { logo.src = info.hero_logo_url; logo.style.display = 'block'; }
       }
+      // Hero text
+      const setHero = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+      if (info.hero_eyebrow) setHero('hero-eyebrow', info.hero_eyebrow);
+      if (info.hero_title)   setHero('hero-title', info.hero_title);
+      if (info.hero_cta) {
+        const cta = document.getElementById('hero-cta');
+        if (cta) cta.textContent = info.hero_cta + ' →';
+      }
       // About
       const setEl = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
       setEl('about-title',  info.about_title);
