@@ -85,6 +85,8 @@ function applySettings(settings) {
         root.style.setProperty('--font-heading', v);
       if (s.section === 'body' || s.section === 'global')
         root.style.setProperty('--font-body', v);
+      if (s.section === 'nav')
+        root.style.setProperty('--font-nav', v);
     }
   });
 }

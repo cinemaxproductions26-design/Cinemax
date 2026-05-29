@@ -433,6 +433,66 @@ async function addTestimonial() {
   if (data) { loadTestimonials(); toast('Testimonial added', 'success'); }
 }
 
+// ── IMAGE MANAGER (Supabase Storage) ─────────────────────────
+const IMG_BUCKET = 'cinemax-images'; // Supabase Storage bucket name
+
+async function loadImageGallery() {
+  const gallery = document.getElementById('imgGallery');
+  if (!gallery) return;
+  gallery.innerHTML = '<p style="color:var(--muted);font-size:0.82rem">Loading...</p>';
+  try {
+    const { data, error } = await db.storage.from(IMG_BUCKET).list('', { sortBy: { column: 'created_at', order: 'desc' } });
+    if (error) { gallery.innerHTML = `<p style="color:#ff6b6b">Error: ${error.message}<br><small>Make sure bucket "${IMG_BUCKET}" exists in Supabase Storage</small></p>`; return; }
+    if (!data || !data.length) { gallery.innerHTML = '<p style="color:var(--muted);font-size:0.82rem">No images yet — upload some above!</p>'; return; }
+    gallery.innerHTML = '';
+    data.filter(f => f.name && !f.name.endsWith('/')).forEach(file => {
+      const { data: urlData } = db.storage.from(IMG_BUCKET).getPublicUrl(file.name);
+      const url = urlData?.publicUrl || '';
+      const div = document.createElement('div');
+      div.className = 'img-thumb';
+      div.innerHTML = `
+        <img src="${url}" alt="${file.name}" loading="lazy">
+        <button class="img-thumb-del" onclick="deleteImage('${file.name}', this)" title="Delete">✕</button>
+        <button class="img-thumb-copy" onclick="copyImgUrl('${url}', this)">Copy URL</button>`;
+      gallery.appendChild(div);
+    });
+  } catch(e) { gallery.innerHTML = `<p style="color:#ff6b6b">Storage not configured. Create bucket "${IMG_BUCKET}" in Supabase.</p>`; }
+}
+
+async function handleImageUpload(files) {
+  if (!files || !files.length) return;
+  const progress = document.getElementById('imgProgress');
+  const bar = document.getElementById('imgProgressBar');
+  if (progress) progress.style.display = 'block';
+  let done = 0;
+  for (const file of Array.from(files)) {
+    const ext = file.name.split('.').pop();
+    const name = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const { error } = await db.storage.from(IMG_BUCKET).upload(name, file, { cacheControl: '3600', upsert: false });
+    done++;
+    if (bar) bar.style.width = (done / files.length * 100) + '%';
+    if (error) toast('Upload failed: ' + error.message);
+    else toast('Uploaded: ' + file.name, 'success');
+  }
+  setTimeout(() => { if (progress) progress.style.display = 'none'; if (bar) bar.style.width = '0'; }, 1500);
+  loadImageGallery();
+}
+
+async function deleteImage(name, btn) {
+  if (!confirm('Delete this image? This cannot be undone.')) return;
+  const { error } = await db.storage.from(IMG_BUCKET).remove([name]);
+  if (error) toast('Delete failed: ' + error.message);
+  else { btn.closest('.img-thumb').remove(); toast('Image deleted'); }
+}
+
+function copyImgUrl(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
+}
+
 // ── CONTACT INFO & ABOUT & HERO ──────────────────────────────
 async function loadContactInfoAdmin() {
   try {

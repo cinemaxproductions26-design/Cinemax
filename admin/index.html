@@ -63,6 +63,7 @@
       <a href="#" data-section="about">📝 &nbsp;About & Hero</a>
       <a href="#" data-section="contact">📞 &nbsp;Contact Info</a>
       <a href="#" data-section="pricing">💰 &nbsp;Pricing</a>
+      <a href="#" data-section="images">🖼️ &nbsp;Image Manager</a>
       <a href="#" data-section="portfolio">📂 &nbsp;Portfolio</a>
       <a href="#" data-section="photography">📷 &nbsp;Photography</a>
       <a href="#" data-section="clients">👥 &nbsp;Clients</a>
@@ -323,6 +324,37 @@
       <div id="pricing-editor-content"></div>
     </div>
 
+    <!-- ── IMAGE MANAGER ── -->
+    <div id="panel-images" class="admin-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Image Manager</h2>
+          <p class="panel-sub">Upload images — copy URL → paste anywhere in admin. Delete removes from storage.</p>
+        </div>
+        <button class="btn-save" onclick="loadImageGallery()">↺ Refresh</button>
+      </div>
+
+      <div class="admin-card">
+        <p class="admin-card-title">Upload Image</p>
+        <div class="img-upload-area" id="imgDropZone">
+          <input type="file" id="imgFileInput" accept="image/*" multiple onchange="handleImageUpload(this.files)">
+          <div class="img-upload-icon">📤</div>
+          <p class="img-upload-label">Click or Drag & Drop images here</p>
+          <p class="img-upload-sub">PNG, JPG, WebP, SVG — max 10MB each</p>
+          <div class="img-upload-progress" id="imgProgress">
+            <div class="img-upload-progress-bar" id="imgProgressBar"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <p class="admin-card-title">Uploaded Images <span style="color:var(--muted);font-size:0.75rem;text-transform:none;letter-spacing:0">— hover → Copy URL or Delete</span></p>
+        <div class="img-gallery" id="imgGallery">
+          <p style="color:var(--muted);font-size:0.82rem">Loading...</p>
+        </div>
+      </div>
+    </div>
+
     <!-- ── PORTFOLIO ── -->
     <div id="panel-portfolio" class="admin-panel">
       <div class="panel-header">
@@ -415,6 +447,17 @@
   document.querySelector('[data-section="photography"]').addEventListener('click', () => {
     setTimeout(loadAlbums, 50);
   });
+  // Load images when image manager panel shown
+  document.querySelector('[data-section="images"]').addEventListener('click', () => {
+    setTimeout(loadImageGallery, 50);
+  });
+  // Drag-over styling
+  const dz = document.getElementById('imgDropZone');
+  if (dz) {
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); handleImageUpload(e.dataTransfer.files); });
+  }
   // Load pricing editor when pricing panel shown
   document.querySelector('[data-section="pricing"]').addEventListener('click', () => {
     setTimeout(loadPricingEditor, 50);
