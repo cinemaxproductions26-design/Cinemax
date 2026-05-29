@@ -434,7 +434,7 @@ async function addTestimonial() {
 }
 
 // ── IMAGE MANAGER (Supabase Storage) ─────────────────────────
-const IMG_BUCKET = 'cinemax-images'; // Supabase Storage bucket name
+const IMG_BUCKET = 'Cinemax-images'; // Supabase Storage bucket name
 
 async function loadImageGallery() {
   const gallery = document.getElementById('imgGallery');
