@@ -88,14 +88,14 @@
     return;
   }
 
-  // Extract Spotify track/album/playlist ID from URL
+  // Extract Spotify embed URL — supports track, album, playlist, artist, episode
   function spotifyEmbedUrl(url) {
     if (!url) return null;
-    // Handle full URLs: https://open.spotify.com/track/ID
-    const m = url.match(/spotify\.com\/(track|album|playlist|episode)\/([a-zA-Z0-9]+)/);
+    // Full URLs: https://open.spotify.com/artist/ID or /track/ID etc.
+    const m = url.match(/spotify\.com\/(track|album|playlist|artist|episode|show)\/([a-zA-Z0-9]+)/);
     if (m) return `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`;
-    // Handle URIs: spotify:track:ID
-    const u = url.match(/spotify:(track|album|playlist):([a-zA-Z0-9]+)/);
+    // URIs: spotify:track:ID or spotify:artist:ID
+    const u = url.match(/spotify:(track|album|playlist|artist|episode):([a-zA-Z0-9]+)/);
     if (u) return `https://open.spotify.com/embed/${u[1]}/${u[2]}?utm_source=generator&theme=0`;
     return null;
   }

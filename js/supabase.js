@@ -61,8 +61,10 @@ async function fetchContactInfo() {
   const { data } = await db.from('contact_info').select('*').eq('id', 1).single();
   return data || null;
 }
-async function fetchPricingPlans() {
-  const { data } = await db.from('pricing_plans').select('*').order('sort_order');
+async function fetchPricingPlans(category) {
+  let q = db.from('pricing_plans').select('*').order('sort_order');
+  if (category) q = q.eq('category', category);
+  const { data } = await q;
   return data || [];
 }
 
@@ -71,22 +73,31 @@ function applySettings(settings) {
   const root = document.documentElement;
   const injected = new Set();
   settings.forEach(s => {
-    if (s.bg_color)            root.style.setProperty('--bg-primary', s.bg_color);
-    if (s.accent_color)        root.style.setProperty('--accent-red', s.accent_color);
-    if (s.google_fonts_url && !injected.has(s.google_fonts_url)) {
-      const l = document.createElement('link');
-      l.rel = 'stylesheet'; l.href = s.google_fonts_url;
-      document.head.appendChild(l);
+    if (s.bg_color)     root.style.setProperty('--bg-primary', s.bg_color);
+    if (s.accent_color) root.style.setProperty('--accent-red', s.accent_color);
+
+    if (s.font_family && s.google_fonts_url && !injected.has(s.google_fonts_url)) {
+      const isCustomFile = s.google_fonts_url.includes('supabase') ||
+                           s.google_fonts_url.match(/\.(ttf|woff2?|otf)(\?|$)/i);
+      if (isCustomFile) {
+        // Custom font file — inject @font-face
+        const style = document.createElement('style');
+        style.textContent = `@font-face { font-family: '${s.font_family}'; src: url('${s.google_fonts_url}') format('woff2'); font-display: swap; }`;
+        document.head.appendChild(style);
+      } else {
+        // Google Fonts URL
+        const l = document.createElement('link');
+        l.rel = 'stylesheet'; l.href = s.google_fonts_url;
+        document.head.appendChild(l);
+      }
       injected.add(s.google_fonts_url);
     }
+
     if (s.font_family) {
       const v = `'${s.font_family}', sans-serif`;
-      if (s.section === 'heading' || s.section === 'global')
-        root.style.setProperty('--font-heading', v);
-      if (s.section === 'body' || s.section === 'global')
-        root.style.setProperty('--font-body', v);
-      if (s.section === 'nav')
-        root.style.setProperty('--font-nav', v);
+      if (s.section === 'heading') root.style.setProperty('--font-heading', v);
+      if (s.section === 'body')    root.style.setProperty('--font-body', v);
+      if (s.section === 'nav')     root.style.setProperty('--font-nav', v);
     }
   });
 }

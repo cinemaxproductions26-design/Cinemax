@@ -306,10 +306,18 @@ h1, h2, h3 {
   position: absolute;
   inset: -20%;
   background:
-    radial-gradient(circle at 30% 50%, rgba(204,26,46,0.18) 0%, transparent 60%),
-    radial-gradient(circle at 70% 50%, rgba(20,51,204,0.18) 0%, transparent 60%);
+    radial-gradient(circle at 30% 50%, rgba(204,26,46,0.22) 0%, transparent 60%),
+    radial-gradient(circle at 70% 50%, rgba(20,51,204,0.22) 0%, transparent 60%);
   border-radius: 50%;
   pointer-events: none;
+  animation: orbFloat 18s ease-in-out infinite alternate;
+}
+
+@keyframes orbFloat {
+  0%   { transform: translateX(0)    translateY(0); }
+  33%  { transform: translateX(28px) translateY(-18px); }
+  66%  { transform: translateX(-18px) translateY(14px); }
+  100% { transform: translateX(22px) translateY(-10px); }
 }
 
 .about-logo {
@@ -440,7 +448,7 @@ h1, h2, h3 {
 
 .client-logo:hover { border-color: rgba(204,26,46,0.5); color: var(--text-primary); }
 
-/* Center clients when few items (static mode) */
+/* Center clients when only 1 client loaded */
 .clients-centered {
   display: flex;
   justify-content: center;
@@ -448,6 +456,10 @@ h1, h2, h3 {
   gap: 16px;
   padding: 24px;
 }
+
+/* Single client — hide marquee rows, show centered */
+.marquee-single .marquee-wrap { display: none; }
+.marquee-single .clients-centered { display: flex; }
 
 /* ===== TESTIMONIALS ===== */
 .testimonials { background: var(--bg-secondary); }

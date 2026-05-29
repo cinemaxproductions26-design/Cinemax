@@ -174,7 +174,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       // About
       const setEl = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
       setEl('about-title',  info.about_title);
-      setEl('about-desc',   info.about_description);
+      setEl('about-desc',   info.about_desc);
       setEl('stat1-num',    info.stat1_num);  setEl('stat1-label', info.stat1_label);
       setEl('stat2-num',    info.stat2_num);  setEl('stat2-label', info.stat2_label);
       setEl('stat3-num',    info.stat3_num);  setEl('stat3-label', info.stat3_label);

@@ -143,18 +143,38 @@ function previewFont(btn) {
 }
 
 async function saveFont(btn) {
-  const row = btn.closest('.font-row');
+  const row     = btn.closest('.font-row');
   const section = row.dataset.fontSection;
   const name    = row.querySelector('.font-name-input').value.trim();
   if (!name) return;
   const url = `https://fonts.googleapis.com/css2?family=${name.replace(/ /g, '+')}:wght@400;600;700&display=swap`;
   await db.from('site_settings').upsert({
-    section,
-    font_family: name,
-    google_fonts_url: url,
-    updated_at: new Date().toISOString()
+    section, font_family: name, google_fonts_url: url, updated_at: new Date().toISOString()
   }, { onConflict: 'section' });
   toast(`Font saved for ${section}!`, 'success');
+}
+
+async function uploadCustomFont(input, section) {
+  const file = input.files[0];
+  if (!file) return;
+  const btn = input.closest('.font-row').querySelector('.btn-save');
+  btn.textContent = 'Uploading…';
+  btn.disabled = true;
+  const ext  = file.name.split('.').pop().toLowerCase();
+  const name = `font-${Date.now()}.${ext}`;
+  const { data, error } = await db.storage.from(IMG_BUCKET).upload(`fonts/${name}`, file, { cacheControl: '31536000', upsert: false });
+  if (error) { toast('Upload failed: ' + error.message); btn.textContent = 'Save'; btn.disabled = false; return; }
+  const { data: urlData } = db.storage.from(IMG_BUCKET).getPublicUrl(`fonts/${name}`);
+  const publicUrl = urlData.publicUrl;
+  // Use filename without extension as font-family name
+  const fontName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+  const row = input.closest('.font-row');
+  row.querySelector('.font-name-input').value = fontName;
+  await db.from('site_settings').upsert({
+    section, font_family: fontName, google_fonts_url: publicUrl, updated_at: new Date().toISOString()
+  }, { onConflict: 'section' });
+  btn.textContent = 'Save'; btn.disabled = false;
+  toast(`Custom font uploaded & saved for ${section}!`, 'success');
 }
 
 // ── PORTFOLIO PANEL ───────────────────────────────────────────
@@ -170,19 +190,24 @@ function renderCategoryList() {
   if (!container) return;
   container.innerHTML = '';
 
-  allCategories.forEach(cat => {
+  allCategories.forEach((cat, idx) => {
     const block = document.createElement('div');
     block.className = 'category-block';
     block.dataset.id = cat.id;
+    // Use text name only — avoids emoji encoding bugs
+    const safeName = cat.name.replace(/</g,'&lt;').replace(/>/g,'&gt;');
     block.innerHTML = `
       <div class="category-header" onclick="toggleCategory(this)">
-        <span class="category-icon">${cat.icon || '📁'}</span>
-        <span class="category-name">${cat.name}</span>
+        <div style="display:flex;gap:4px;flex-shrink:0" onclick="event.stopPropagation()">
+          <button class="btn-sm" style="padding:2px 7px;font-size:0.75rem" onclick="moveCategory(${cat.id},-1)" title="Move up">▲</button>
+          <button class="btn-sm" style="padding:2px 7px;font-size:0.75rem" onclick="moveCategory(${cat.id},1)" title="Move down">▼</button>
+        </div>
+        <span class="category-name" style="flex:1">${safeName}</span>
         <label class="toggle" onclick="event.stopPropagation()">
           <input type="checkbox" ${cat.enabled ? 'checked' : ''} onchange="toggleCatEnabled(${cat.id}, this.checked)">
           <span class="toggle-slider"></span>
         </label>
-        <span class="chevron">▼</span>
+        <span class="chevron" style="pointer-events:none">▼</span>
       </div>
       <div class="category-body" id="cat-body-${cat.id}">
         <div class="item-list" id="items-${cat.id}"></div>
@@ -191,6 +216,22 @@ function renderCategoryList() {
     container.appendChild(block);
     loadCategoryItems(cat.id, cat.slug);
   });
+}
+
+async function moveCategory(id, direction) {
+  const idx = allCategories.findIndex(c => c.id === id);
+  const swapIdx = idx + direction;
+  if (swapIdx < 0 || swapIdx >= allCategories.length) return;
+  // Swap sort_order values
+  const a = allCategories[idx];
+  const b = allCategories[swapIdx];
+  await Promise.all([
+    db.from('portfolio_categories').update({ sort_order: b.sort_order }).eq('id', a.id),
+    db.from('portfolio_categories').update({ sort_order: a.sort_order }).eq('id', b.id)
+  ]);
+  // Re-sort locally and re-render
+  [allCategories[idx], allCategories[swapIdx]] = [allCategories[swapIdx], allCategories[idx]];
+  renderCategoryList();
 }
 
 function toggleCategory(header) {
@@ -507,7 +548,7 @@ async function loadContactInfoAdmin() {
     set('ci-linkedin',   info.linkedin_url);
     set('ci-hero-logo',  info.hero_logo_url);
     set('ci-about-title', info.about_title);
-    set('ci-about-desc',  info.about_description);
+    set('ci-about-desc',  info.about_desc);
     set('ci-about-image', info.about_image_url);
     set('ci-stat1-num',   info.stat1_num);   set('ci-stat1-label', info.stat1_label);
     set('ci-stat2-num',   info.stat2_num);   set('ci-stat2-label', info.stat2_label);
@@ -527,7 +568,7 @@ async function saveContactInfo() {
     linkedin_url:       get('ci-linkedin'),
     hero_logo_url:      get('ci-hero-logo'),
     about_title:        get('ci-about-title'),
-    about_description:  get('ci-about-desc'),
+    about_desc:         get('ci-about-desc'),
     about_image_url:    get('ci-about-image'),
     stat1_num:          get('ci-stat1-num'),   stat1_label: get('ci-stat1-label'),
     stat2_num:          get('ci-stat2-num'),   stat2_label: get('ci-stat2-label'),

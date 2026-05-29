@@ -167,6 +167,10 @@
             <button class="btn-sm" onclick="previewFont(this)">Preview</button>
             <button class="btn-save" onclick="saveFont(this)">Save</button>
           </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+            <label style="font-size:0.75rem;color:var(--muted)">Or upload custom font file:</label>
+            <input type="file" accept=".ttf,.woff,.woff2,.otf" style="font-size:0.75rem;color:var(--muted)" onchange="uploadCustomFont(this,'heading')">
+          </div>
           <p class="font-preview-text">Creating Core Cinema</p>
         </div>
 
@@ -177,6 +181,10 @@
             <button class="btn-sm" onclick="previewFont(this)">Preview</button>
             <button class="btn-save" onclick="saveFont(this)">Save</button>
           </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+            <label style="font-size:0.75rem;color:var(--muted)">Or upload custom font file:</label>
+            <input type="file" accept=".ttf,.woff,.woff2,.otf" style="font-size:0.75rem;color:var(--muted)" onchange="uploadCustomFont(this,'body')">
+          </div>
           <p class="font-preview-text" style="font-size:1rem">We craft cinematic experiences from sound to vision.</p>
         </div>
 
@@ -186,6 +194,10 @@
             <input class="admin-input font-name-input" placeholder="e.g. Poppins" list="font-list">
             <button class="btn-sm" onclick="previewFont(this)">Preview</button>
             <button class="btn-save" onclick="saveFont(this)">Save</button>
+          </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+            <label style="font-size:0.75rem;color:var(--muted)">Or upload custom font file:</label>
+            <input type="file" accept=".ttf,.woff,.woff2,.otf" style="font-size:0.75rem;color:var(--muted)" onchange="uploadCustomFont(this,'nav')">
           </div>
           <p class="font-preview-text" style="font-size:0.9rem">About &nbsp;·&nbsp; Portfolio &nbsp;·&nbsp; Pricing &nbsp;·&nbsp; Contact</p>
         </div>
