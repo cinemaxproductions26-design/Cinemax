@@ -55,6 +55,7 @@ async function initDashboard() {
   setupSidebar();
   await loadSettings();
   await loadFonts();
+  await loadContactInfoAdmin();
   await loadCategories();
   await loadClients();
   await loadTestimonials();
@@ -430,6 +431,184 @@ async function addTestimonial() {
     .insert({ name: 'New Person', role: '', quote: '', avatar_initials: 'NP', enabled: true, sort_order: 999 })
     .select().single();
   if (data) { loadTestimonials(); toast('Testimonial added', 'success'); }
+}
+
+// ── CONTACT INFO & ABOUT & HERO ──────────────────────────────
+async function loadContactInfoAdmin() {
+  try {
+    const info = await fetchContactInfo();
+    if (!info) return;
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val !== null && val !== undefined) el.value = val; };
+    set('ci-email',      info.email);
+    set('ci-whatsapp',   info.whatsapp);
+    set('ci-location',   info.location);
+    set('ci-instagram',  info.instagram_url);
+    set('ci-youtube',    info.youtube_url);
+    set('ci-linkedin',   info.linkedin_url);
+    set('ci-hero-logo',  info.hero_logo_url);
+    set('ci-about-title', info.about_title);
+    set('ci-about-desc',  info.about_description);
+    set('ci-about-image', info.about_image_url);
+    set('ci-stat1-num',   info.stat1_num);   set('ci-stat1-label', info.stat1_label);
+    set('ci-stat2-num',   info.stat2_num);   set('ci-stat2-label', info.stat2_label);
+    set('ci-stat3-num',   info.stat3_num);   set('ci-stat3-label', info.stat3_label);
+  } catch(e) {}
+}
+
+async function saveContactInfo() {
+  const get = id => { const el = document.getElementById(id); return el ? el.value : null; };
+  const payload = {
+    id: 1,
+    email:              get('ci-email'),
+    whatsapp:           get('ci-whatsapp'),
+    location:           get('ci-location'),
+    instagram_url:      get('ci-instagram'),
+    youtube_url:        get('ci-youtube'),
+    linkedin_url:       get('ci-linkedin'),
+    hero_logo_url:      get('ci-hero-logo'),
+    about_title:        get('ci-about-title'),
+    about_description:  get('ci-about-desc'),
+    about_image_url:    get('ci-about-image'),
+    stat1_num:          get('ci-stat1-num'),   stat1_label: get('ci-stat1-label'),
+    stat2_num:          get('ci-stat2-num'),   stat2_label: get('ci-stat2-label'),
+    stat3_num:          get('ci-stat3-num'),   stat3_label: get('ci-stat3-label'),
+    updated_at:         new Date().toISOString()
+  };
+  // Remove null values
+  Object.keys(payload).forEach(k => { if (payload[k] === null) delete payload[k]; });
+  const { error } = await db.from('contact_info').upsert(payload, { onConflict: 'id' });
+  if (error) toast('Error: ' + error.message);
+  else toast('Saved! Refresh the live site to see changes.', 'success');
+}
+
+// ── PRICING EDITOR ────────────────────────────────────────────
+let pricingData = [];
+
+async function loadPricingEditor() {
+  try {
+    pricingData = await fetchPricingPlans();
+  } catch(e) { pricingData = []; }
+  renderPricingEditor('music');
+}
+
+function renderPricingEditor(cat) {
+  const container = document.getElementById('pricing-editor-content');
+  if (!container) return;
+  const cats = ['music','sfx','photography','design'];
+  let html = '';
+  cats.forEach(c => {
+    const plans = pricingData.filter(p => p.category === c).sort((a,b) => a.sort_order - b.sort_order);
+    html += `<div class="pricing-cat-panel${c===cat?' active':''}" id="pcat-${c}">`;
+    if (!plans.length) {
+      html += `<div class="admin-card" style="text-align:center;color:var(--muted)">No plans yet — <button class="btn-save" onclick="addPricingPlan('${c}')">+ Add Plan</button></div>`;
+    } else {
+      plans.forEach(p => { html += renderPlanCard(p); });
+      html += `<button class="btn-sm" style="margin-top:8px" onclick="addPricingPlan('${c}')">+ Add Plan</button>`;
+    }
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderPlanCard(p) {
+  const feats = (p.features || []).map((f,i) => `
+    <div class="feature-item">
+      <input class="admin-input" value="${f}" placeholder="Feature ${i+1}" data-feat="${i}">
+      <button class="btn-del" style="padding:4px 8px" onclick="removeFeature(this,${p.id})">✕</button>
+    </div>`).join('');
+  return `<div class="plan-card${p.is_featured?' is-featured':''}" data-plan-id="${p.id}">
+    <div class="plan-header">
+      <span class="plan-title">${p.tier_name}</span>
+      <label class="featured-toggle">
+        <input type="checkbox" ${p.is_featured?'checked':''} onchange="toggleFeatured(this,${p.id})">
+        ⭐ Most Popular
+      </label>
+    </div>
+    <div class="plan-fields">
+      <div>
+        <label class="form-label" style="margin-bottom:4px;display:block">Tier Name</label>
+        <input class="admin-input" value="${p.tier_name||''}" placeholder="Basic" data-field="tier_name">
+      </div>
+      <div>
+        <label class="form-label" style="margin-bottom:4px;display:block">Price</label>
+        <input class="admin-input" value="${p.price||''}" placeholder="₹5,000" data-field="price">
+      </div>
+      <div>
+        <label class="form-label" style="margin-bottom:4px;display:block">Unit</label>
+        <input class="admin-input" value="${p.unit||''}" placeholder="/ track" data-field="unit">
+      </div>
+      <div>
+        <label class="form-label" style="margin-bottom:4px;display:block">Sort Order</label>
+        <input class="admin-input" value="${p.sort_order||0}" type="number" data-field="sort_order">
+      </div>
+      <textarea class="admin-textarea" placeholder="Short description..." data-field="description" rows="2">${p.description||''}</textarea>
+      <div class="features-list">
+        <label class="form-label" style="margin-bottom:6px;display:block">Features (✓ list)</label>
+        <div class="features-inputs" id="feats-${p.id}">${feats}</div>
+        <button class="add-feature-btn" onclick="addFeatureInput(${p.id})">+ Add Feature</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn-save" onclick="savePlanCard(this,${p.id})">Save</button>
+      <button class="btn-del" onclick="deletePlan(this,${p.id})">Delete</button>
+    </div>
+  </div>`;
+}
+
+async function savePlanCard(btn, id) {
+  const card = btn.closest('.plan-card');
+  const get = field => { const el = card.querySelector(`[data-field="${field}"]`); return el ? el.value : ''; };
+  // Collect features
+  const features = Array.from(card.querySelectorAll('.features-inputs input')).map(i => i.value).filter(v => v.trim());
+  const payload = {
+    tier_name:   get('tier_name'),
+    price:       get('price'),
+    unit:        get('unit'),
+    description: get('description'),
+    sort_order:  parseInt(get('sort_order')) || 0,
+    features
+  };
+  const { error } = await db.from('pricing_plans').update(payload).eq('id', id);
+  if (error) toast('Error: ' + error.message);
+  else { toast('Plan saved!', 'success'); loadPricingEditor(); }
+}
+
+async function toggleFeatured(checkbox, id) {
+  const card = checkbox.closest('.plan-card');
+  card.classList.toggle('is-featured', checkbox.checked);
+  await db.from('pricing_plans').update({ is_featured: checkbox.checked }).eq('id', id);
+  toast(checkbox.checked ? '⭐ Set as Most Popular' : 'Removed Most Popular', 'success');
+}
+
+async function addPricingPlan(cat) {
+  const { data } = await db.from('pricing_plans')
+    .insert({ category: cat, tier_name: 'New Plan', price: '₹0', unit: '', description: '', features: [], is_featured: false, sort_order: 999 })
+    .select().single();
+  if (data) { pricingData.push(data); renderPricingEditor(cat); toast('Plan added', 'success'); }
+}
+
+async function deletePlan(btn, id) {
+  if (!confirm('Delete this pricing plan?')) return;
+  await db.from('pricing_plans').delete().eq('id', id);
+  pricingData = pricingData.filter(p => p.id !== id);
+  const cat = btn.closest('.pricing-cat-panel')?.id?.replace('pcat-','') || 'music';
+  renderPricingEditor(cat);
+  toast('Deleted');
+}
+
+function addFeatureInput(planId) {
+  const container = document.getElementById('feats-' + planId);
+  if (!container) return;
+  const idx = container.querySelectorAll('.feature-item').length;
+  const div = document.createElement('div');
+  div.className = 'feature-item';
+  div.innerHTML = `<input class="admin-input" placeholder="New feature" data-feat="${idx}">
+    <button class="btn-del" style="padding:4px 8px" onclick="this.parentElement.remove()">✕</button>`;
+  container.appendChild(div);
+}
+
+function removeFeature(btn) {
+  btn.closest('.feature-item').remove();
 }
 
 // ── PASSWORD CHANGE ───────────────────────────────────────────

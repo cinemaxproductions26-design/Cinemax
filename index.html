@@ -37,8 +37,8 @@
 <section id="home" class="hero">
   <div class="hero-content">
     <p class="hero-eyebrow">Welcome to Cinemax</p>
+    <img id="hero-logo-img" src="assets/logo.png" alt="Cinemax" class="hero-logo-img" onerror="this.style.display='none'">
     <h1 class="hero-title">Creating<br>Core Cinema</h1>
-    <p class="hero-sub">Music Production &nbsp;·&nbsp; SFX &nbsp;·&nbsp; Photography &nbsp;·&nbsp; Publicity Design</p>
     <a href="#contact" class="btn btn-red">Get A Quote &nbsp;→</a>
   </div>
   <div class="hero-scroll">
@@ -53,30 +53,30 @@
     <div class="about-grid">
       <div class="about-text">
         <span class="section-label">Who We Are</span>
-        <h2 class="section-title">We Craft Cinematic Experiences</h2>
-        <p class="about-desc">
+        <h2 class="section-title" id="about-title">We Craft Cinematic Experiences</h2>
+        <p class="about-desc" id="about-desc">
           Cinemax is a full-spectrum creative studio bringing stories to life through sound and vision.
           From crafting immersive film scores and bespoke sound effects to capturing stunning visuals
           and designing bold publicity campaigns — we are the creative force behind unforgettable cinematic moments.
         </p>
         <div class="about-stats">
           <div class="stat">
-            <span class="stat-num">100+</span>
-            <span class="stat-label">Projects</span>
+            <span class="stat-num" id="stat1-num">100+</span>
+            <span class="stat-label" id="stat1-label">Projects</span>
           </div>
           <div class="stat">
-            <span class="stat-num">50+</span>
-            <span class="stat-label">Clients</span>
+            <span class="stat-num" id="stat2-num">50+</span>
+            <span class="stat-label" id="stat2-label">Clients</span>
           </div>
           <div class="stat">
-            <span class="stat-num">5+</span>
-            <span class="stat-label">Years</span>
+            <span class="stat-num" id="stat3-num">5+</span>
+            <span class="stat-label" id="stat3-label">Years</span>
           </div>
         </div>
       </div>
       <div class="about-visual">
         <div class="about-glow"></div>
-        <img src="assets/logo.png" alt="Cinemax" class="about-logo">
+        <img src="assets/logo.png" alt="Cinemax" class="about-logo" id="about-image" onerror="this.style.opacity='0'">
       </div>
     </div>
   </div>
@@ -259,12 +259,14 @@
     <span class="section-label">Investment</span>
     <h2 class="section-title">Pricing</h2>
 
-    <div class="pricing-tabs">
+    <div class="pricing-tabs" id="pricing-tabs">
       <button class="tab-btn active" data-tab="music">Music Production</button>
       <button class="tab-btn" data-tab="sfx">SFX</button>
       <button class="tab-btn" data-tab="photo">Photography</button>
       <button class="tab-btn" data-tab="design">Publicity Design</button>
     </div>
+    <div id="pricing-dynamic"><!-- Supabase pricing loaded here --></div>
+    <div id="pricing-static">
 
     <!-- MUSIC PRODUCTION -->
     <div class="pricing-panel active" id="tab-music">
@@ -451,6 +453,7 @@
       </div>
     </div>
 
+    </div><!-- end pricing-static -->
   </div>
 </section>
 
@@ -467,7 +470,7 @@
           <div class="contact-icon">✉</div>
           <div>
             <p class="contact-label">Email</p>
-            <a href="mailto:hello@cinemax.in" class="contact-value">hello@cinemax.in</a>
+            <a href="mailto:hello@cinemax.in" class="contact-value" id="contact-email">hello@cinemax.in</a>
           </div>
         </div>
 
@@ -475,7 +478,7 @@
           <div class="contact-icon">💬</div>
           <div>
             <p class="contact-label">WhatsApp</p>
-            <a href="https://wa.me/919999999999" class="contact-value" target="_blank" rel="noopener">+91 99999 99999</a>
+            <a href="https://wa.me/919999999999" class="contact-value" id="contact-whatsapp" target="_blank" rel="noopener">+91 99999 99999</a>
           </div>
         </div>
 
@@ -483,7 +486,7 @@
           <div class="contact-icon">📍</div>
           <div>
             <p class="contact-label">Location</p>
-            <span class="contact-value">Chennai, Tamil Nadu, India</span>
+            <span class="contact-value" id="contact-location">Chennai, Tamil Nadu, India</span>
           </div>
         </div>
 
@@ -492,9 +495,9 @@
           <div>
             <p class="contact-label">Social Media</p>
             <div class="contact-social">
-              <a href="#" class="social-link" target="_blank" rel="noopener">📸 Instagram</a>
-              <a href="#" class="social-link" target="_blank" rel="noopener">▶ YouTube</a>
-              <a href="#" class="social-link" target="_blank" rel="noopener">in LinkedIn</a>
+              <a href="#" class="social-link" id="contact-instagram" target="_blank" rel="noopener">📸 Instagram</a>
+              <a href="#" class="social-link" id="contact-youtube" target="_blank" rel="noopener">▶ YouTube</a>
+              <a href="#" class="social-link" id="contact-linkedin" target="_blank" rel="noopener">in LinkedIn</a>
             </div>
           </div>
         </div>

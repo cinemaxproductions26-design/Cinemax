@@ -57,6 +57,14 @@ async function fetchTestimonials() {
     .eq('enabled', true).order('sort_order');
   return data || [];
 }
+async function fetchContactInfo() {
+  const { data } = await db.from('contact_info').select('*').eq('id', 1).single();
+  return data || null;
+}
+async function fetchPricingPlans() {
+  const { data } = await db.from('pricing_plans').select('*').order('sort_order');
+  return data || [];
+}
 
 // ── Apply settings to CSS variables ──────────────────────────
 function applySettings(settings) {

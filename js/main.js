@@ -102,17 +102,35 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     // Load clients from Supabase
     const clients = await fetchClients();
     if (clients.length) {
-      function buildMarqueeRow(items) {
-        return [...items, ...items].map(c => {
-          if (c.logo_url) {
-            return `<div class="client-logo"><img src="${c.logo_url}" alt="${c.name}" style="max-height:40px;max-width:130px;object-fit:contain"></div>`;
-          }
-          return `<div class="client-logo">${c.name}</div>`;
-        }).join('');
+      if (clients.length <= 4) {
+        // Few clients — show centered static layout instead of marquee
+        const section = document.getElementById('clients');
+        const wraps = section ? section.querySelectorAll('.marquee-wrap') : [];
+        wraps.forEach(w => w.style.display = 'none');
+        const centered = document.createElement('div');
+        centered.className = 'clients-centered';
+        clients.forEach(c => {
+          const div = document.createElement('div');
+          div.className = 'client-logo';
+          div.innerHTML = c.logo_url
+            ? `<img src="${c.logo_url}" alt="${c.name}" style="max-height:40px;max-width:130px;object-fit:contain">`
+            : c.name;
+          centered.appendChild(div);
+        });
+        if (section) section.querySelector('.container').after(centered);
+      } else {
+        function buildMarqueeRow(items) {
+          return [...items, ...items].map(c => {
+            if (c.logo_url) {
+              return `<div class="client-logo"><img src="${c.logo_url}" alt="${c.name}" style="max-height:40px;max-width:130px;object-fit:contain"></div>`;
+            }
+            return `<div class="client-logo">${c.name}</div>`;
+          }).join('');
+        }
+        const tracks = document.querySelectorAll('.marquee-track');
+        if (tracks[0]) tracks[0].innerHTML = buildMarqueeRow(clients);
+        if (tracks[1]) tracks[1].innerHTML = buildMarqueeRow([...clients].reverse());
       }
-      const tracks = document.querySelectorAll('.marquee-track');
-      if (tracks[0]) tracks[0].innerHTML = buildMarqueeRow(clients);
-      if (tracks[1]) tracks[1].innerHTML = buildMarqueeRow([...clients].reverse());
     }
 
     // Load testimonials from Supabase
@@ -145,6 +163,95 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         }
       }
     }
+    // ── Contact info + Hero logo + About section ──
+    const info = await fetchContactInfo();
+    if (info) {
+      // Hero logo
+      if (info.hero_logo_url) {
+        const logo = document.getElementById('hero-logo-img');
+        if (logo) { logo.src = info.hero_logo_url; logo.style.display = 'block'; }
+      }
+      // About
+      const setEl = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+      setEl('about-title',  info.about_title);
+      setEl('about-desc',   info.about_description);
+      setEl('stat1-num',    info.stat1_num);  setEl('stat1-label', info.stat1_label);
+      setEl('stat2-num',    info.stat2_num);  setEl('stat2-label', info.stat2_label);
+      setEl('stat3-num',    info.stat3_num);  setEl('stat3-label', info.stat3_label);
+      if (info.about_image_url) {
+        const img = document.getElementById('about-image');
+        if (img) { img.src = info.about_image_url; img.style.opacity = '1'; }
+      }
+      // Contact section
+      const cEmail = document.getElementById('contact-email');
+      if (cEmail && info.email) { cEmail.textContent = info.email; cEmail.href = 'mailto:' + info.email; }
+      const cWa = document.getElementById('contact-whatsapp');
+      if (cWa && info.whatsapp) {
+        const num = info.whatsapp.replace(/\D/g,'');
+        cWa.href = 'https://wa.me/' + num;
+        cWa.textContent = '+' + num;
+      }
+      const cLoc = document.getElementById('contact-location');
+      if (cLoc && info.location) cLoc.textContent = info.location;
+      const cInsta = document.getElementById('contact-instagram');
+      if (cInsta) { if (info.instagram_url) { cInsta.href = info.instagram_url; cInsta.style.display=''; } else cInsta.style.display='none'; }
+      const cYt = document.getElementById('contact-youtube');
+      if (cYt) { if (info.youtube_url) { cYt.href = info.youtube_url; cYt.style.display=''; } else cYt.style.display='none'; }
+      const cLi = document.getElementById('contact-linkedin');
+      if (cLi) { if (info.linkedin_url) { cLi.href = info.linkedin_url; cLi.style.display=''; } else cLi.style.display='none'; }
+      // Update all WhatsApp links site-wide
+      if (info.whatsapp) {
+        const waNum = info.whatsapp.replace(/\D/g,'');
+        document.querySelectorAll('a[href*="wa.me"]').forEach(a => {
+          const url = new URL(a.href);
+          const text = url.searchParams.get('text') || '';
+          a.href = 'https://wa.me/' + waNum + (text ? '?text=' + encodeURIComponent(text) : '');
+        });
+      }
+    }
+
+    // ── Pricing from Supabase ──
+    const plans = await fetchPricingPlans();
+    const pricingDynamic = document.getElementById('pricing-dynamic');
+    const pricingStatic  = document.getElementById('pricing-static');
+    if (plans.length && pricingDynamic) {
+      const tabMap = { music:'music', sfx:'sfx', photography:'photo', design:'design' };
+      const cats = ['music','sfx','photography','design'];
+      let html = '';
+      cats.forEach((cat, idx) => {
+        const tabId = tabMap[cat];
+        const catPlans = plans.filter(p => p.category === cat).sort((a,b) => a.sort_order - b.sort_order);
+        if (!catPlans.length) return;
+        html += `<div class="pricing-panel${idx===0?' active':''}" id="dyn-tab-${tabId}">
+          <div class="pricing-cards">`;
+        catPlans.forEach(p => {
+          html += `<div class="pricing-card${p.is_featured?' featured':''}">
+            ${p.is_featured ? '<p class="pricing-badge">Most Popular</p>' : ''}
+            <p class="pricing-tier">${p.tier_name}</p>
+            <p class="pricing-price">${p.price} <span>${p.unit||''}</span></p>
+            <p class="pricing-desc">${p.description||''}</p>
+            <ul class="pricing-features">
+              ${(p.features||[]).map(f=>`<li>${f}</li>`).join('')}
+            </ul>
+            <a href="#contact" class="btn ${p.is_featured?'btn-red':'btn-outline'}">Get Quote →</a>
+          </div>`;
+        });
+        html += `</div></div>`;
+      });
+      pricingDynamic.innerHTML = html;
+      if (pricingStatic) pricingStatic.style.display = 'none';
+      // Re-wire tab buttons to dynamic panels
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('#pricing-dynamic .pricing-panel').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          const panel = document.getElementById('dyn-tab-' + btn.dataset.tab);
+          if (panel) panel.classList.add('active');
+        });
+      });
+    }
+
   } catch(e) { /* Supabase not configured — use static content */ }
 })();
 

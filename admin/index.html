@@ -9,10 +9,29 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin.css">
   <style>
-    /* Failsafe: ensure dark theme even if admin.css delays */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     .hidden { display: none !important; }
     body { background: #07070f; color: #ffffff; font-family: 'Inter', sans-serif; }
+    /* Popular fonts datalist helper */
+    .font-suggestions { font-size:0.75rem; color:var(--muted); margin-top:4px; }
+    .font-tag { display:inline-block; background:var(--bg3); border:1px solid var(--border); border-radius:4px; padding:2px 8px; margin:2px; cursor:pointer; font-size:0.73rem; transition:border-color 0.2s; }
+    .font-tag:hover { border-color:var(--red); color:#fff; }
+    /* Pricing editor */
+    .pricing-editor-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+    .pricing-editor-tab { padding:6px 16px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; font-size:0.82rem; font-family:'Inter',sans-serif; transition:all 0.2s; }
+    .pricing-editor-tab.active { background:var(--red); border-color:var(--red); color:#fff; }
+    .pricing-cat-panel { display:none; } .pricing-cat-panel.active { display:block; }
+    .plan-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:12px; }
+    .plan-card.is-featured { border-color:var(--red); }
+    .plan-header { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+    .plan-title { font-weight:700; font-size:0.9rem; flex:1; }
+    .featured-toggle { display:flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--muted); cursor:pointer; }
+    .plan-fields { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .plan-fields textarea { grid-column:1/-1; }
+    .features-list { grid-column:1/-1; }
+    .feature-item { display:flex; gap:6px; margin-bottom:6px; }
+    .feature-item input { flex:1; }
+    .add-feature-btn { font-size:0.78rem; color:var(--red); background:none; border:1px dashed var(--red); border-radius:4px; padding:4px 10px; cursor:pointer; margin-top:4px; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -41,6 +60,9 @@
     <nav class="sidebar-nav">
       <a href="#" class="active" data-section="settings">🎨 &nbsp;Site Settings</a>
       <a href="#" data-section="fonts">🔤 &nbsp;Font Manager</a>
+      <a href="#" data-section="about">📝 &nbsp;About & Hero</a>
+      <a href="#" data-section="contact">📞 &nbsp;Contact Info</a>
+      <a href="#" data-section="pricing">💰 &nbsp;Pricing</a>
       <a href="#" data-section="portfolio">📂 &nbsp;Portfolio</a>
       <a href="#" data-section="photography">📷 &nbsp;Photography</a>
       <a href="#" data-section="clients">👥 &nbsp;Clients</a>
@@ -104,19 +126,6 @@
 
         </div>
       </div>
-
-      <div class="admin-card">
-        <p class="admin-card-title">Hero Section</p>
-        <div class="form-row">
-          <label class="form-label">Hero Tagline</label>
-          <input class="admin-input" id="hero-tagline" placeholder="e.g. Creating Core Cinema" style="flex:1">
-        </div>
-        <div class="form-row">
-          <label class="form-label">Sub Text</label>
-          <input class="admin-input" id="hero-sub" placeholder="Services text below title" style="flex:1">
-        </div>
-        <button class="btn-save" style="margin-top:8px" onclick="toast('Save Supabase settings to apply.','success')">Save Hero Text</button>
-      </div>
     </div>
 
     <!-- ── FONTS ── -->
@@ -129,12 +138,31 @@
       </div>
 
       <div class="admin-card">
+        <p class="admin-card-title">Popular Fonts — Click to select</p>
+        <div style="margin-bottom:16px">
+          <span class="font-tag" onclick="setFontSuggestion(this,'heading')">Bebas Neue</span>
+          <span class="font-tag" onclick="setFontSuggestion(this,'heading')">Oswald</span>
+          <span class="font-tag" onclick="setFontSuggestion(this,'heading')">Montserrat</span>
+          <span class="font-tag" onclick="setFontSuggestion(this,'heading')">Playfair Display</span>
+          <span class="font-tag" onclick="setFontSuggestion(this,'heading')">Anton</span>
+          <span class="font-tag" onclick="setFontSuggestion(this,'heading')">Rajdhani</span>
+          <span class="font-tag" onclick="setFontSuggestion(this,'body')">Inter</span>
+          <span class="font-tag" onclick="setFontSuggestion(this,'body')">Poppins</span>
+          <span class="font-tag" onclick="setFontSuggestion(this,'body')">Nunito</span>
+          <span class="font-tag" onclick="setFontSuggestion(this,'body')">Lato</span>
+          <span class="font-tag" onclick="setFontSuggestion(this,'nav')">DM Sans</span>
+          <span class="font-tag" onclick="setFontSuggestion(this,'nav')">Outfit</span>
+        </div>
+        <p style="font-size:0.75rem;color:var(--muted)">Click a font tag to auto-fill the input below, then click Preview / Save.</p>
+      </div>
+
+      <div class="admin-card">
         <p class="admin-card-title">Assign Fonts Per Section</p>
 
         <div class="font-row" data-font-section="heading" style="border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:16px">
           <div class="form-row">
             <label class="form-label">Headings (H1, H2)</label>
-            <input class="admin-input font-name-input" placeholder="e.g. Bebas Neue">
+            <input class="admin-input font-name-input" placeholder="e.g. Bebas Neue" list="font-list">
             <button class="btn-sm" onclick="previewFont(this)">Preview</button>
             <button class="btn-save" onclick="saveFont(this)">Save</button>
           </div>
@@ -144,7 +172,7 @@
         <div class="font-row" data-font-section="body" style="border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:16px">
           <div class="form-row">
             <label class="form-label">Body Text</label>
-            <input class="admin-input font-name-input" placeholder="e.g. Inter">
+            <input class="admin-input font-name-input" placeholder="e.g. Inter" list="font-list">
             <button class="btn-sm" onclick="previewFont(this)">Preview</button>
             <button class="btn-save" onclick="saveFont(this)">Save</button>
           </div>
@@ -154,13 +182,145 @@
         <div class="font-row" data-font-section="nav">
           <div class="form-row">
             <label class="form-label">Navigation</label>
-            <input class="admin-input font-name-input" placeholder="e.g. Poppins">
+            <input class="admin-input font-name-input" placeholder="e.g. Poppins" list="font-list">
             <button class="btn-sm" onclick="previewFont(this)">Preview</button>
             <button class="btn-save" onclick="saveFont(this)">Save</button>
           </div>
           <p class="font-preview-text" style="font-size:0.9rem">About &nbsp;·&nbsp; Portfolio &nbsp;·&nbsp; Pricing &nbsp;·&nbsp; Contact</p>
         </div>
       </div>
+
+      <datalist id="font-list">
+        <option value="Bebas Neue"><option value="Oswald"><option value="Montserrat">
+        <option value="Playfair Display"><option value="Anton"><option value="Rajdhani">
+        <option value="Inter"><option value="Poppins"><option value="Nunito">
+        <option value="Lato"><option value="Roboto"><option value="DM Sans">
+        <option value="Outfit"><option value="Cinzel"><option value="Cormorant Garamond">
+        <option value="Space Grotesk"><option value="Plus Jakarta Sans"><option value="Sora">
+      </datalist>
+    </div>
+
+    <!-- ── ABOUT & HERO ── -->
+    <div id="panel-about" class="admin-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">About & Hero</h2>
+          <p class="panel-sub">Edit logo, hero text, about section and stats</p>
+        </div>
+        <button class="btn-save" onclick="saveContactInfo()">Save All</button>
+      </div>
+
+      <div class="admin-card">
+        <p class="admin-card-title">Hero Logo</p>
+        <div class="form-row">
+          <label class="form-label">Logo Image URL</label>
+          <input class="admin-input" id="ci-hero-logo" placeholder="https://... (paste image URL or upload to Supabase Storage)" style="flex:1">
+        </div>
+        <p style="font-size:0.75rem;color:var(--muted);margin-top:8px">Tip: Upload logo to <a href="https://supabase.com/dashboard/project/hfrtfuawsvgkmdriuhay/storage" target="_blank" style="color:var(--red)">Supabase Storage</a> → copy public URL → paste here</p>
+      </div>
+
+      <div class="admin-card">
+        <p class="admin-card-title">About Section</p>
+        <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+          <label class="form-label">Section Title</label>
+          <input class="admin-input" id="ci-about-title" placeholder="We Craft Cinematic Experiences" style="width:100%">
+        </div>
+        <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px;margin-top:12px">
+          <label class="form-label">Description</label>
+          <textarea class="admin-textarea" id="ci-about-desc" rows="4" placeholder="About your studio..."></textarea>
+        </div>
+        <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px;margin-top:12px">
+          <label class="form-label">Right Side Image URL</label>
+          <input class="admin-input" id="ci-about-image" placeholder="https://... (image shown on right side of About)" style="width:100%">
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <p class="admin-card-title">Stats (100+ Projects etc.)</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div>
+            <label class="form-label" style="margin-bottom:4px;display:block">Stat 1 Number</label>
+            <input class="admin-input" id="ci-stat1-num" placeholder="100+">
+            <label class="form-label" style="margin:8px 0 4px;display:block">Stat 1 Label</label>
+            <input class="admin-input" id="ci-stat1-label" placeholder="Projects">
+          </div>
+          <div>
+            <label class="form-label" style="margin-bottom:4px;display:block">Stat 2 Number</label>
+            <input class="admin-input" id="ci-stat2-num" placeholder="50+">
+            <label class="form-label" style="margin:8px 0 4px;display:block">Stat 2 Label</label>
+            <input class="admin-input" id="ci-stat2-label" placeholder="Clients">
+          </div>
+          <div>
+            <label class="form-label" style="margin-bottom:4px;display:block">Stat 3 Number</label>
+            <input class="admin-input" id="ci-stat3-num" placeholder="5+">
+            <label class="form-label" style="margin:8px 0 4px;display:block">Stat 3 Label</label>
+            <input class="admin-input" id="ci-stat3-label" placeholder="Years">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONTACT INFO ── -->
+    <div id="panel-contact" class="admin-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Contact Info</h2>
+          <p class="panel-sub">Changes apply everywhere on the site automatically</p>
+        </div>
+        <button class="btn-save" onclick="saveContactInfo()">Save All</button>
+      </div>
+
+      <div class="admin-card">
+        <p class="admin-card-title">Contact Details</p>
+        <div class="form-row">
+          <label class="form-label">Email</label>
+          <input class="admin-input" id="ci-email" type="email" placeholder="hello@cinemax.in" style="flex:1">
+        </div>
+        <div class="form-row" style="margin-top:12px">
+          <label class="form-label">WhatsApp Number</label>
+          <input class="admin-input" id="ci-whatsapp" placeholder="919876543210 (with country code, no +)" style="flex:1">
+        </div>
+        <div class="form-row" style="margin-top:12px">
+          <label class="form-label">Location</label>
+          <input class="admin-input" id="ci-location" placeholder="Chennai, Tamil Nadu, India" style="flex:1">
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <p class="admin-card-title">Social Media Links</p>
+        <div class="form-row">
+          <label class="form-label">📸 Instagram URL</label>
+          <input class="admin-input" id="ci-instagram" placeholder="https://instagram.com/youraccount" style="flex:1">
+        </div>
+        <div class="form-row" style="margin-top:12px">
+          <label class="form-label">▶ YouTube URL</label>
+          <input class="admin-input" id="ci-youtube" placeholder="https://youtube.com/@yourchannel" style="flex:1">
+        </div>
+        <div class="form-row" style="margin-top:12px">
+          <label class="form-label">in LinkedIn URL</label>
+          <input class="admin-input" id="ci-linkedin" placeholder="https://linkedin.com/company/..." style="flex:1">
+        </div>
+        <p style="font-size:0.75rem;color:var(--muted);margin-top:12px">Leave blank to hide that social icon on the site</p>
+      </div>
+    </div>
+
+    <!-- ── PRICING ── -->
+    <div id="panel-pricing" class="admin-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Pricing</h2>
+          <p class="panel-sub">Edit prices, features and Most Popular badge for each plan</p>
+        </div>
+      </div>
+
+      <div class="pricing-editor-tabs">
+        <button class="pricing-editor-tab active" data-pcat="music">🎵 Music</button>
+        <button class="pricing-editor-tab" data-pcat="sfx">🔊 SFX</button>
+        <button class="pricing-editor-tab" data-pcat="photography">📷 Photography</button>
+        <button class="pricing-editor-tab" data-pcat="design">🎨 Design</button>
+      </div>
+
+      <div id="pricing-editor-content"></div>
     </div>
 
     <!-- ── PORTFOLIO ── -->
@@ -172,7 +332,6 @@
         </div>
         <button class="btn-save" onclick="addCategory()">+ New Category</button>
       </div>
-
       <div id="category-list"></div>
     </div>
 
@@ -196,12 +355,12 @@
       <div class="panel-header">
         <div>
           <h2 class="panel-title">Clients</h2>
-          <p class="panel-sub">Add client logos or text badges to the scrolling marquee.</p>
+          <p class="panel-sub">Add client logos or text badges.</p>
         </div>
         <button class="btn-save" onclick="addClient()">+ Add Client</button>
       </div>
       <div class="admin-card">
-        <p class="admin-card-title">Client List <span style="color:var(--muted);font-size:0.78rem;text-transform:none;letter-spacing:0">(Leave logo URL blank for text-only badge)</span></p>
+        <p class="admin-card-title">Client List <span style="color:var(--muted);font-size:0.78rem;text-transform:none;letter-spacing:0">(Leave logo URL blank for text badge)</span></p>
         <div class="item-list" id="clients-list"></div>
       </div>
     </div>
@@ -256,6 +415,26 @@
   document.querySelector('[data-section="photography"]').addEventListener('click', () => {
     setTimeout(loadAlbums, 50);
   });
+  // Load pricing editor when pricing panel shown
+  document.querySelector('[data-section="pricing"]').addEventListener('click', () => {
+    setTimeout(loadPricingEditor, 50);
+  });
+  // Pricing editor tab switching
+  document.querySelectorAll('.pricing-editor-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pricing-editor-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.pricing-cat-panel').forEach(p => p.classList.remove('active'));
+      const panel = document.getElementById('pcat-' + btn.dataset.pcat);
+      if (panel) panel.classList.add('active');
+    });
+  });
+  // Font suggestion tags
+  function setFontSuggestion(tag, section) {
+    const name = tag.textContent.trim();
+    const row = document.querySelector(`[data-font-section="${section}"] .font-name-input`);
+    if (row) { row.value = name; row.focus(); }
+  }
 </script>
 </body>
 </html>
